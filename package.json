@@ -1,13 +1,12 @@
 {
-  "name": "serialport-binding-webusb-ftdi232",
+  "name": "ftdi-js",
   "version": "0.0.1",
   "main": "index.js",
-  "description": "WebUSB Serial Port Binding for FTDI chips",
-  "author": "dvsoftware@gmail.com",
-  "license": "MIT",
+  "description": "FTDI user-space driver for Node.js/Electron in pure JS",
+  "author": "Gerrit Niezen",
+  "license": "BSD-2-Clause",
   "dependencies": {
-    "@serialport/binding-abstract": "^8.0.6",
-    "buffer": "^5.4.3"
+    "webusb": "2.0.1"
   },
-  "keywords": ["serialport-binding"]
+  "keywords": ["ftdi"]
 }
