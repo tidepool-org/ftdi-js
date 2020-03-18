@@ -8,5 +8,7 @@
   "dependencies": {
     "webusb": "2.0.1"
   },
-  "keywords": ["ftdi"]
+  "keywords": [
+    "ftdi"
+  ]
 }
