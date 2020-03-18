@@ -1,6 +1,5 @@
 const FTDI = require('./index.js');
 
-
 const bytes2hex = (bytes, noGaps) => {
   var message = '';
   for(var i in bytes) {
@@ -36,19 +35,7 @@ const keypress = async () => {
       await ftdi.writeAsync(data);
     });
 
-
     await ftdi.writeAsync(data);
-    // let result = await ftdi.read();
-    // console.log('Bytes read:', result.bytesRead);
-    // console.log('Data:', bytes2hex(result.uint8buffer));
-    //
-    // result = await ftdi.read();
-    // console.log('Bytes read:', result.bytesRead);
-    // console.log('Data:', bytes2hex(result.uint8buffer));
-    // await ftdi.write(data);
-    // result = await ftdi.read();
-    // console.log('Bytes read:', result.bytesRead);
-    // console.log('Data:', bytes2hex(result.uint8buffer));
 
     console.log('Press any key to continue');
     await keypress();
