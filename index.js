@@ -107,13 +107,12 @@ class ftdi extends EventEmitter {
         console.log('selectConfiguration');
         await device.selectConfiguration(1);
       }
-      console.log('interfaces:', device.configuration.interfaces)
       await device.claimInterface(0);
       await device.selectConfiguration(1);
       await device.selectAlternateInterface(0, 0);
 
-      const [baud, value, index] = FTDIConvertBaudrate(options.baudRate);
-      console.log(baud, value, index);
+      const [baud] = FTDIConvertBaudrate(options.baudRate);
+      console.log('Setting baud rate to', baud);
       const result = await device.controlTransferOut({
           requestType: 'vendor',
           recipient: 'device',
@@ -123,12 +122,13 @@ class ftdi extends EventEmitter {
       });
 
       self.device = device;
-
-      console.log('Starting read loop');
+      self.isClosing = false;
+      this.device.transferIn(1, 64); // flush buffer
       self.readLoop();
       self.emit('ready');
     })().catch((error) => {
       console.log('Error during FTDI setup:', error);
+      self.emit('error', error);
     });
   }
 
@@ -147,7 +147,7 @@ class ftdi extends EventEmitter {
       this.emit('data', uint8buffer.slice(2));
     }
 
-    if (this.device.opened) {
+    if (!this.isClosing && this.device.opened) {
       this.readLoop();
     }
   };
@@ -170,15 +170,23 @@ class ftdi extends EventEmitter {
   write(data, cb) {
     this.writeAsync(data).then(() => {
       cb();
-    }, err => cb(err, null));
+    }, err => cb(err));
+  }
+
+  async closeAsync() {
+    await this.device.releaseInterface(0);
+    await this.device.close();
   }
 
   close(cb) {
+    this.isClosing = true;
     (async () => {
       await this.device.releaseInterface(0);
       await this.device.close();
       return cb();
-    })();
+    })().catch((error) => {
+      return cb(error);
+    });
   }
 }
 
