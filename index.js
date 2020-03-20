@@ -111,7 +111,7 @@ class ftdi extends EventEmitter {
       await device.selectConfiguration(1);
       await device.selectAlternateInterface(0, 0);
 
-      const [baud] = FTDIConvertBaudrate(options.baudRate);
+      const [baud, value, index] = FTDIConvertBaudrate(options.baudRate);
       console.log('Setting baud rate to', baud);
       const result = await device.controlTransferOut({
           requestType: 'vendor',
