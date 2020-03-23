@@ -138,7 +138,11 @@ class ftdi extends EventEmitter {
     try {
       result = await this.device.transferIn(1, 64);
     } catch (error) {
-      console.log('Error reading data:', error);
+      if (error.message.indexOf('LIBUSB_TRANSFER_NO_DEVICE')) {
+        console.log('Device disconnected');
+      } else {
+        console.log('Error reading data:', error);
+      }
     };
 
     if (result && result.data && result.data.byteLength && result.data.byteLength > 2) {
@@ -174,6 +178,7 @@ class ftdi extends EventEmitter {
   }
 
   async closeAsync() {
+    this.isClosing = true;
     await this.device.releaseInterface(0);
     await this.device.close();
   }

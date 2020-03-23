@@ -40,7 +40,7 @@ const keypress = async () => {
     console.log('Press any key to continue');
     await keypress();
 
-    await ftdi.close();
+    await ftdi.closeAsync();
   });
 
 })().catch((error) => {

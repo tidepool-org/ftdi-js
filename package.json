@@ -9,6 +9,6 @@
     "webusb": "2.0.1"
   },
   "keywords": [
-    "ftdi"
+    "ftdi", "usb"
   ]
 }

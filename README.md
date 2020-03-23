@@ -1,21 +1,21 @@
 # FTDI.js
 
-WIP
+This is a user-space USB driver for FTDI chipsets, written in pure JavaScript. It's currently written for Node.js/Electron, but uses the [Node.js implementation of the WebUSB spec](https://github.com/thegecko/webusb), so should easily be adapted for WebUSB in the browser.
 
 ## Installation
 
-WIP
+```
+npm install ftdi-js
+```
 
 ## Usage
-
-WIP
 
 ### Node.js / Electron
 
 ```js
-const FTDI = require('./index.js');
+const FTDI = require('ftdi-js');
 
-const ftdi = new FTDI(6777, 24577, { baudRate: 9600 });
+const ftdi = new FTDI(vendorId, productId, { baudRate: 9600 });
 
 ftdi.on('error', (err) => {
   console.log('Error', err);
@@ -34,3 +34,5 @@ ftdi.on('ready', async () => {
   await ftdi.close();
 });
 ```
+
+Also see [test.js](./test.js) for details.
