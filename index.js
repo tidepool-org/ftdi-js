@@ -1,11 +1,22 @@
-require('buffer');
+/*
+* == BSD2 LICENSE ==
+* Copyright (c) 2020, Tidepool Project
+*
+* This program is free software; you can redistribute it and/or modify it under
+* the terms of the associated License, which is identical to the BSD 2-Clause
+* License as published by the Open Source Initiative at opensource.org.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the License for more details.
+*
+* You should have received a copy of the License along with this program; if
+* not, you can obtain one from Tidepool Project at tidepool.org.
+* == BSD2 LICENSE ==
+*/
 
-console.log(Buffer);
-const AbstractBinding = require('@serialport/binding-abstract');
-
-// TODO: Implement other FTDI variants.
-const VENDOR_ID = '0x0403';
-const PRODUCT_ID = '0x6001';
+const usb = require('webusb').usb;
+const EventEmitter = require('events');
 
 const H_CLK = 120000000;
 const C_CLK = 48000000;
@@ -70,85 +81,118 @@ function FTDIConvertBaudrate(baud) {
     return [bestBaud, value, index];
 }
 
-class FTDI323Binding extends AbstractBinding {
-    static async list() {
-        const devices = await navigator.usb.getDevices();
-        if (devices.length > 0) {
-            return devices;
-        }
+class ftdi extends EventEmitter {
+  constructor(vendorId, productId, options) {
+    super();
+    const self = this;
 
-        await navigator.usb.requestDevice({
-            filters: [
-                {
-                    vendorId: VENDOR_ID,
-                    productId: PRODUCT_ID,
-                }
-            ]
-        });
-        return navigator.usb.getDevices();
-    }
+    (async () => {
+      const device = await usb.requestDevice({
+        filters: [
+          {
+            vendorId,
+            productId,
+          }
+        ]
+      });
 
-    async open(device, options) {
-        if (!device || !device instanceof USBDevice) {
-            throw new TypeError('"path" is not a valid USBDevice');
-        }
+      if (device.opened) {
+          console.log('Already open');
+          await device.close();
+      }
+      await device.open();
+      console.log('Opened:', device.opened);
 
-        if (typeof options !== 'object') {
-            throw new TypeError('"options" is not an object')
-        }
-
-        if (this.isOpen) {
-            throw new Error('Already open')
-        }
-        await device.open();
-
-        if (device.configuration === null) {
-            await device.selectConfiguration(1);
-        }
-        await device.claimInterface(0);
+      if (device.configuration === null) {
+        console.log('selectConfiguration');
         await device.selectConfiguration(1);
-        await device.selectAlternateInterface(0, 0);
+      }
+      await device.claimInterface(0);
+      await device.selectConfiguration(1);
+      await device.selectAlternateInterface(0, 0);
 
-        const [baud, value, index] = FTDIConvertBaudrate(options.baudRate);
-        console.log(baud, value, index);
-        const result = await device.controlTransferOut({
-            requestType: 'vendor',
-            recipient: 'device',
-            request: 3,
-            value ,
-            index,
-        });
+      const [baud, value, index] = FTDIConvertBaudrate(options.baudRate);
+      console.log('Setting baud rate to', baud);
+      const result = await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 3,
+          value ,
+          index,
+      });
 
-        this.device = device;
-        this.isOpen = true;
+      self.device = device;
+      self.isClosing = false;
+      this.device.transferIn(1, 64); // flush buffer
+      self.readLoop();
+      self.emit('ready');
+    })().catch((error) => {
+      console.log('Error during FTDI setup:', error);
+      self.emit('error', error);
+    });
+  }
+
+  async readLoop() {
+    let result;
+
+    try {
+      result = await this.device.transferIn(1, 64);
+    } catch (error) {
+      if (error.message.indexOf('LIBUSB_TRANSFER_NO_DEVICE')) {
+        console.log('Device disconnected');
+      } else {
+        console.log('Error reading data:', error);
+      }
+    };
+
+    if (result && result.data && result.data.byteLength && result.data.byteLength > 2) {
+      console.log(`Received ${result.data.byteLength - 2} byte(s).`);
+      const uint8buffer = new Uint8Array(result.data.buffer);
+      this.emit('data', uint8buffer.slice(2));
     }
 
-    async read(buffer, offset, length) {
-        await super.read(buffer, offset, 64)
+    if (!this.isClosing && this.device.opened) {
+      this.readLoop();
+    }
+  };
 
-        const {data: {buffer: dataBuffer, byteLength: bytesRead}} = await this.device.transferIn(1, 64);
-        
-        const uint8buffer = new Uint8Array(dataBuffer);
+  async read() {
+    const {data: {buffer: dataBuffer, byteLength: bytesRead}} = await this.device.transferIn(1, 64);
+    const uint8buffer = new Uint8Array(dataBuffer);
 
-        if (bytesRead === 2) {
-            return this.read(buffer, offset, 64);
-        }
-
-        for (let i = offset; i < offset + bytesRead - 2; i++) {
-            buffer[i] = uint8buffer[i+2-offset];
-        }
-
-        return { bytesRead: bytesRead-2, buffer };
+    if (bytesRead === 2) {
+      return this.read();
     }
 
-    async write(buffer) {
-        return this.device.transferOut(2, buffer);
-    }
+    return { bytesRead: bytesRead-2, data: uint8buffer.slice(2) };
+  }
 
-    async close() {
-        super.close();
-        return this.device.close();
-    }
+  async writeAsync(buffer) {
+    return await this.device.transferOut(2, buffer);
+  }
+
+  write(data, cb) {
+    this.writeAsync(data).then(() => {
+      cb();
+    }, err => cb(err));
+  }
+
+  async closeAsync() {
+    this.isClosing = true;
+    await this.device.releaseInterface(0);
+    await this.device.close();
+  }
+
+  close(cb) {
+    this.isClosing = true;
+    (async () => {
+      await this.device.releaseInterface(0);
+      await this.device.close();
+      return cb();
+    })().catch((error) => {
+      return cb(error);
+    });
+  }
 }
 
-module.exports = FTDI323Binding;
+module.exports = ftdi;

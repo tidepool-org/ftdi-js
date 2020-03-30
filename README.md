@@ -1,29 +1,38 @@
-# serialport-binding-webusb-ftdi232
+# FTDI.js
 
-__FTDI232__ Binding for `webusb-serialport`.
-
-__Note:__ Even though this binding can be used with the default `serialport` package, it loads the default bindings which try to initialize Linux bindings, `webusb-serialport` does not load any binding nor it does autodetect it. 
+This is a user-space USB driver for FTDI chipsets, written in pure JavaScript. It's currently written for Node.js/Electron, but uses the [Node.js implementation of the WebUSB spec](https://github.com/thegecko/webusb), so should easily be adapted for WebUSB in the browser.
 
 ## Installation
-```bash
-npm install webusb-serialport serialport-binding-webusb-ftdi232
+
+```
+npm install ftdi-js
 ```
 
 ## Usage
-```javascript
-const SerialPort = require('webusb-serialport'); // Require WebUSB Serial
-const FTDIBinding = require('serialport-binding-webusb-ftdi232'); // Require FTDI Binding
 
-SerialPort.Binding = FTDIBinding; // Set the binding
+### Node.js / Electron
 
-SerialPort.list() // List the devices (this will trigger the WebUSB device chooser)
-    .then((devices) => {
-        const serialPort = new SerialPort(devices[0], {
-            autoOpen: true,
-            baudRate: 115200,
-        });
+```js
+const FTDI = require('ftdi-js');
 
-        // Use as a serialport module
-        serialPort.write('data');
-    });
+const ftdi = new FTDI(vendorId, productId, { baudRate: 9600 });
+
+ftdi.on('error', (err) => {
+  console.log('Error', err);
+});
+
+ftdi.on('ready', async () => {
+  const data = new Uint8Array(1);
+  data.set([0x06]);
+
+  ftdi.on('data', async (data) => {
+    console.log('Data:', bytes2hex(data));
+  });
+
+  await ftdi.writeAsync(data);
+
+  await ftdi.close();
+});
 ```
+
+Also see [test.js](./test.js) for details.
