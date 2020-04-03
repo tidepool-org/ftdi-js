@@ -181,8 +181,10 @@ class ftdi extends EventEmitter {
   async closeAsync() {
     this.isClosing = true;
     try {
+      console.log('Sending EOT');
+      await this.writeAsync([0x04]);
+      await delay(2000); // wait for send/receive to complete
       await this.device.releaseInterface(0);
-      await delay(2000); // wait to make sure the endpoints are closed
       await this.device.close();
       this.removeAllListeners();
       console.log('Closed device');
