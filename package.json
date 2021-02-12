@@ -6,7 +6,7 @@
   "author": "Gerrit Niezen",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "webusb": "2.0.1"
+    "webusb": "2.2.0"
   },
   "keywords": [
     "ftdi",
