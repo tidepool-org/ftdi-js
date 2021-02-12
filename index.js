@@ -112,6 +112,24 @@ class ftdi extends EventEmitter {
       await device.selectConfiguration(1);
       await device.selectAlternateInterface(0, 0);
 
+      console.log('Setting Modem control RTS enable');
+      await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 1,
+          value: 0x0202,
+          index: 0,
+      });
+
+      console.log('Setting flow control XON/XOFF to zero');
+      await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 2,
+          value: 0x0000,
+          index: 0,
+      });
+
       const [baud, value, index] = FTDIConvertBaudrate(options.baudRate);
       console.log('Setting baud rate to', baud);
       const result = await device.controlTransferOut({
@@ -120,6 +138,33 @@ class ftdi extends EventEmitter {
           request: 3,
           value ,
           index,
+      });
+
+      console.log('Setting modem control DTR enable');
+      await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 1,
+          value: 0x0101,
+          index: 0,
+      });
+
+      console.log('Setting data 8 bit, no parity');
+      await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 4,
+          value: 0x0008,
+          index: 0,
+      });
+
+      console.log('Setting event characteristics');
+      await device.controlTransferOut({
+          requestType: 'vendor',
+          recipient: 'device',
+          request: 6,
+          value: 0x0000,
+          index: 0,
       });
 
       self.device = device;

@@ -24,11 +24,11 @@ const keypress = async () => {
 }
 
 (async () => {
-  const ftdi = new FTDI(6777, 24577, {baudRate: 9600});
+  const ftdi = new FTDI(0x0403, 0x6015, {baudRate: 9600});
 
   ftdi.on('ready', async () => {
     const data = new Uint8Array(1);
-    data.set([0x06]);
+    data.set([0x80]);
 
     ftdi.on('data', async (data) => {
       console.log('Data:', bytes2hex(data));
