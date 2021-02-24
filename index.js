@@ -20,6 +20,7 @@ const EventEmitter = require('events');
 
 const H_CLK = 120000000;
 const C_CLK = 48000000;
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function FTDIToClkbits(baud, clk, clkDiv) {
     const fracCode = [0, 3, 2, 4, 1, 5, 6, 7];
@@ -179,19 +180,24 @@ class ftdi extends EventEmitter {
 
   async closeAsync() {
     this.isClosing = true;
-    await this.device.releaseInterface(0);
-    await this.device.close();
+    try {
+      console.log('Sending EOT');
+      await this.writeAsync([0x04]);
+      await delay(2000); // wait for send/receive to complete
+      await this.device.releaseInterface(0);
+      await this.device.close();
+      this.removeAllListeners();
+      console.log('Closed device');
+    } catch(err) {
+      console.log('Error:', err);
+    }
   }
 
   close(cb) {
-    this.isClosing = true;
     (async () => {
-      await this.device.releaseInterface(0);
-      await this.device.close();
+      await this.closeAsync();
       return cb();
-    })().catch((error) => {
-      return cb(error);
-    });
+    })();
   }
 }
 
