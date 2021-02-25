@@ -1,12 +1,12 @@
 {
   "name": "ftdi-js",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "index.js",
   "description": "FTDI user-space driver for Node.js/Electron in pure JS",
   "author": "Gerrit Niezen",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "webusb": "2.0.1"
+    "webusb": "2.2.0"
   },
   "keywords": [
     "ftdi",

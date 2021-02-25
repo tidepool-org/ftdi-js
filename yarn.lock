@@ -444,10 +444,10 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
 
-webusb@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/webusb/-/webusb-2.0.1.tgz#97293cf63657d8376ec097831031537f83d2629d"
-  integrity sha512-r8bv1s2qa6jMe1kI0YoHfiWPOtG4M6BVArnAJS1GaYx3KP6gSw2gKZeFKMCr632B0KVDVji4+XdZZsc/BnkgBQ==
+webusb@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/webusb/-/webusb-2.2.0.tgz#2e666afb182e6a6a1e9e279cc3a343b10aad7a5e"
+  integrity sha512-EP6JOFIqR4vLoDWwtMROs94Sl/sZlmX1WApK9O8/rBMBEiYTrDlgQrfUQ4CW5o+GSxfbA+MpDRgGbEBa5q0ECw==
   dependencies:
     "@types/node" "^8.0.54"
     "@types/usb" "^1.5.1"
