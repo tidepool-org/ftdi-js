@@ -15,8 +15,15 @@
 * == BSD2 LICENSE ==
 */
 
-const usb = require('webusb').usb;
-const EventEmitter = require('events');
+import { webusb } from 'usb';
+import isElectron from 'is-electron';
+
+const isBrowser = typeof window !== 'undefined';
+
+if (isElectron() || !isBrowser) {
+  // For Node.js and Electron
+  EventTarget = require('events');
+}
 
 const H_CLK = 120000000;
 const C_CLK = 48000000;
@@ -82,13 +89,13 @@ function FTDIConvertBaudrate(baud) {
     return [bestBaud, value, index];
 }
 
-class ftdi extends EventEmitter {
+class ftdi extends EventTarget {
   constructor(vendorId, productId, options) {
     super();
     const self = this;
 
     (async () => {
-      const device = await usb.requestDevice({
+      const device = await webusb.requestDevice({
         filters: [
           {
             vendorId,
@@ -97,10 +104,10 @@ class ftdi extends EventEmitter {
         ]
       });
 
-      if (device.opened) {
-          console.log('Already open');
-          await device.close();
+      if (device == null) {
+        throw new Error('Could not find device');
       }
+
       await device.open();
       console.log('Opened:', device.opened);
 
