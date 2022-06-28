@@ -89,7 +89,7 @@ function FTDIConvertBaudrate(baud) {
     return [bestBaud, value, index];
 }
 
-class ftdi extends EventTarget {
+export default class ftdi extends EventTarget {
   constructor(vendorId, productId, options) {
     super();
     const self = this;
@@ -207,5 +207,3 @@ class ftdi extends EventTarget {
     })();
   }
 }
-
-module.exports = ftdi;
