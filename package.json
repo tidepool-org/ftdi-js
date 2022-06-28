@@ -5,6 +5,7 @@
   "description": "FTDI user-space driver for Node.js/Electron in pure JS",
   "author": "Gerrit Niezen",
   "license": "BSD-2-Clause",
+  "type": "module",
   "dependencies": {
     "core-js": "2.6.10",
     "is-electron": "2.2.1",
