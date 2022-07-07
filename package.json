@@ -1,6 +1,6 @@
 {
   "name": "ftdi-js",
-  "version": "0.0.10",
+  "version": "0.3.0",
   "main": "index.js",
   "description": "FTDI user-space driver for Node.js/Electron in pure JS",
   "author": "Gerrit Niezen",
