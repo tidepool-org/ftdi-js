@@ -20,11 +20,6 @@ import isElectron from 'is-electron';
 
 const isBrowser = typeof window !== 'undefined';
 
-if (isElectron() || !isBrowser) {
-  // For Node.js and Electron
-  EventTarget = require('events');
-}
-
 const H_CLK = 120000000;
 const C_CLK = 48000000;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -133,10 +128,12 @@ export default class ftdi extends EventTarget {
       self.isClosing = false;
       this.device.transferIn(1, 64); // flush buffer
       self.readLoop();
-      self.emit('ready');
+      self.dispatchEvent(new Event('ready'));
     })().catch((error) => {
       console.log('Error during FTDI setup:', error);
-      self.emit('error', error);
+      self.dispatchEvent(new CustomEvent('error', {
+        detail: error,
+      }));
     });
   }
 
@@ -156,7 +153,9 @@ export default class ftdi extends EventTarget {
     if (result && result.data && result.data.byteLength && result.data.byteLength > 2) {
       console.log(`Received ${result.data.byteLength - 2} byte(s).`);
       const uint8buffer = new Uint8Array(result.data.buffer);
-      this.emit('data', uint8buffer.slice(2));
+      this.dispatchEvent(new CustomEvent('data', {
+        detail: uint8buffer.slice(2),
+      }));
     }
 
     if (!this.isClosing && this.device.opened) {
@@ -193,7 +192,6 @@ export default class ftdi extends EventTarget {
       await delay(2000); // wait for send/receive to complete
       await this.device.releaseInterface(0);
       await this.device.close();
-      this.removeAllListeners();
       console.log('Closed device');
     } catch(err) {
       console.log('Error:', err);
