@@ -14,12 +14,6 @@
 * not, you can obtain one from Tidepool Project at tidepool.org.
 * == BSD2 LICENSE ==
 */
-
-import { webusb } from 'usb';
-import isElectron from 'is-electron';
-
-const isBrowser = typeof window !== 'undefined';
-
 const H_CLK = 120000000;
 const C_CLK = 48000000;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -85,20 +79,11 @@ function FTDIConvertBaudrate(baud) {
 }
 
 export default class ftdi extends EventTarget {
-  constructor(vendorId, productId, options) {
+  constructor(device, options) {
     super();
     const self = this;
 
     (async () => {
-      const device = await webusb.requestDevice({
-        filters: [
-          {
-            vendorId,
-            productId,
-          }
-        ]
-      });
-
       if (device == null) {
         throw new Error('Could not find device');
       }

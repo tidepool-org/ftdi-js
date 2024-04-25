@@ -1,4 +1,5 @@
-const FTDI = require('./index.js');
+import FTDI from './index.js';
+import { webusb } from 'usb';
 
 const bytes2hex = (bytes, noGaps) => {
   var message = '';
@@ -24,13 +25,22 @@ const keypress = async () => {
 }
 
 (async () => {
-  const ftdi = new FTDI(6777, 24577, {baudRate: 9600});
+  const device = await webusb.requestDevice({
+    filters: [
+      {
+        vendorId: 6777,
+        productId: 24577,
+      },
+    ],
+  });
 
-  ftdi.on('ready', async () => {
+  const ftdi = new FTDI(device, {baudRate: 9600});
+
+  ftdi.addEventListener('ready', async () => {
     const data = new Uint8Array(1);
     data.set([0x06]);
 
-    ftdi.on('data', async (data) => {
+    ftdi.addEventListener('data', async (data) => {
       console.log('Data:', bytes2hex(data));
       await ftdi.writeAsync(data);
     });
